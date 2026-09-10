@@ -38,11 +38,31 @@ export default {
     return {
       apiData: [],
       id: '',
+      postData: {
+        name: '',
+        description: '',
+        price: '',
+        currentStock: '',
+        imageUrl: '',
+      },
+      postDataDefault: {
+        name: '',
+        description: '',
+        price: '',
+        currentStock: '',
+        imageUrl: '',
+      },
+      editDialog: true,
     };
   },
   created() {
     // Use the created lifecycle hook to fetch data when the component is created but DOM is not yet mounted. This is useful for initializing data before the component is rendered.
     this.getData();
+  },
+  watch: {
+    '$store.state.accessToken'() {
+      this.getData();
+    },
   },
   computed: {
     // Computed property real-time to determine the save mode based on the presence of an ID. If the ID is empty, it indicates a new item; otherwise, it indicates editing an existing item.
@@ -56,13 +76,16 @@ export default {
         .get('http://localhost:3000/api/v1/products')
         .then((response) => {
           console.log(response.data);
-          this.apiData = response.data.data;
-          this.apiData = this.apiData.map((item) => {
-            return {
-              ...item,
-              imageUrl: this.getImageAbsoluteUrl(item.imageUrl),
-            };
-          });
+          this.apiData = response.data.data.map((item) => ({
+            ...item,
+            imageUrl: this.getImageAbsoluteUrl(item.imageUrl),
+          }));
+        })
+        .catch((error) => {
+          console.error('Error fetching data:', error);
+          const message =
+            error.response?.data?.message || 'Failed to fetch products.';
+          this.$toast.error(message);
         });
     },
     getImageAbsoluteUrl(imagePath) {

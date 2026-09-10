@@ -79,10 +79,6 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-    <v-snackbar v-model="snackbar.show" :color="snackbar.color" top right>
-      {{ snackbar.message }}
-      <v-btn text @click="snackbar.show = false">Close</v-btn>
-    </v-snackbar>
   </div>
 </template>
 
@@ -109,11 +105,6 @@ export default {
         password: '',
       },
       tab: 'signup',
-      snackbar: {
-        show: false,
-        message: '',
-        color: '',
-      },
     };
   },
   computed: {
@@ -149,43 +140,52 @@ export default {
           this.loginPayload
         );
         console.log(responseBody);
-        const accessToken = responseBody.data[0].accessToken;
-        if (!accessToken) {
-          throw new Error('Login response did not include an access token.');
-        }
-        console.log('Access Token:', accessToken);
-        this.$cookies.set('accessToken', accessToken, '1d'); // Set cookie for 1 day
-        this.$cookies.set('User', this.loginPayload.username, '1d');
-        this.$emit('logged-in', this.loginPayload.username);
-        this.showMessage('Login successful!', 'success');
+        this.setAuth(responseBody);
+        this.$toast.success('Login successful!');
         // Handle successful login, e.g., store token, redirect, etc.
       } catch (error) {
         console.error(error);
-        this.showMessage('Login failed. Please try again.', 'error');
+        this.$toast.error('Login failed. Please try again.');
         // Handle login error, e.g., show error message
       }
     },
     async registerUser() {
       try {
-        const response = await axios.post(
+        const { data: responseBody } = await axios.post(
           'http://localhost:3000/api/v1/register',
           this.RegisterPayload
         );
-        console.log(response.data);
-        this.showMessage('Registration successful!', 'success');
-        return response.data;
-        // Handle successful registration, e.g., redirect to login, etc.
+        console.log(responseBody);
+        this.setAuth(responseBody);
+        this.$toast.success('Registration successful!');
       } catch (error) {
         console.error(error);
-        this.showMessage('Registration failed. Please try again.', 'error');
+        this.$toast.error('Registration failed. Please try again.');
       }
     },
-    showMessage(message, color) {
-      this.snackbar = {
-        show: true,
-        message,
-        color,
-      };
+    setAuth(responseBody) {
+      const accessToken = responseBody.data[0].accessToken;
+      if (!accessToken) {
+        throw new Error('Login response did not include an access token.');
+      }
+      console.log('Access Token:', accessToken);
+      const userData = responseBody.data[0].user;
+      console.log('User Data:', userData);
+      localStorage.setItem('User', userData.username);
+      localStorage.setItem('Role', userData.role);
+      localStorage.setItem('isApproved', userData.isApproved);
+      localStorage.setItem('storeOwnerId', userData._id);
+      this.$cookies.set('accessToken', accessToken, '1d'); // Set cookie for 1 day
+      this.$cookies.set('User', userData.username, '1d');
+      this.$cookies.set('Role', userData.role, '1d');
+      this.$cookies.set('isApproved', userData.isApproved, '1d');
+      this.$emit('logged-in', userData.username);
+      // set the access token in the axios default headers for future requests
+      axios.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+      this.$store.commit('SET_AUTH', {
+        accessToken,
+        username: userData.username,
+      });
     },
     resetForm() {
       this.RegisterPayload = {
