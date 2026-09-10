@@ -36,15 +36,22 @@ const routes = [
         component: () =>
           import(/* webpackChunkName: "about" */ '../views/AboutView.vue'),
       },
+      // customer
       {
         path: '/products',
         name: 'products',
         component: () => import('../views/HomeProductsView.vue'),
       },
       {
+        path: '/my-shopping-cart',
+        name: 'my-shopping-cart',
+        component: () => import('../views/OrdersView.vue'),
+      },
+      // owner
+      {
         path: '/orders',
         name: 'orders',
-        component: () => import('../views/OrdersView.vue'),
+        component: () => import('../views/OwnerOrdersView.vue'),
       },
       {
         path: '/my-products',

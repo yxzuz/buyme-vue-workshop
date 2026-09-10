@@ -9,6 +9,11 @@
       <v-btn text color="white" to="/products">Products</v-btn>
       <v-btn text color="white" to="/my-products">My Products</v-btn>
       <v-btn text color="white" to="/orders">My Orders</v-btn>
+      <v-btn text color="white" to="/my-shopping-cart">
+        <v-badge :content="cartCount" :value="cartCount" color="error" overlap>
+          <v-icon>mdi-cart</v-icon>
+        </v-badge>
+      </v-btn>
       <v-spacer></v-spacer>
 
       <span class="mr-2">Welcome {{ user }} !</span>
@@ -35,6 +40,11 @@ export default {
       user2: '',
       loginDialog: false,
     };
+  },
+  computed: {
+    cartCount() {
+      return this.$store.getters.cartCount;
+    },
   },
   mounted() {
     // do when starting the page

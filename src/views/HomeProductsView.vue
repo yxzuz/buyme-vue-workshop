@@ -10,7 +10,7 @@
               >{{ item.name }}
               <v-spacer></v-spacer>
               <span
-                ><v-btn dark @click="callAlertParam(item.name)"
+                ><v-btn dark @click="addToCart(item)"
                   ><v-icon>mdi-cart-variant</v-icon></v-btn
                 ></span
               >
@@ -95,8 +95,9 @@ export default {
         ? `http://localhost:3000/${imagePath.replace(/^public\//, '')}`
         : ''; // Replace the first occurrence of "public/" with an empty string
     },
-    callAlertParam(message) {
-      alert(message);
+    addToCart(item) {
+      this.$store.commit('ADD_TO_CART', { product: item, quantity: 1 });
+      this.$toast.success(`${item.name} added to cart!`);
     },
   },
 };
