@@ -8,6 +8,7 @@
 
       <v-btn text color="white" to="/products">Products</v-btn>
       <v-btn text color="white" to="/my-products">My Products</v-btn>
+      <v-btn text color="white" to="/orders">My Orders</v-btn>
       <v-spacer></v-spacer>
 
       <span class="mr-2">Welcome {{ user }} !</span>

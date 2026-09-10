@@ -5,7 +5,7 @@
       <v-row>
         <v-col v-for="(item, idx) in apiData" :key="idx" cols="3">
           <v-card width="500px" height="600px">
-            <v-img height="300px" :src="item.imageUrl" />
+            <v-img height="300px" :src="item.imageUrl || placeholder" />
             <v-card-title
               >{{ item.name }}
               <v-spacer></v-spacer>
@@ -33,6 +33,7 @@
 </template>
 
 <script>
+import placeholder from '@/assets/placeholder.jpeg';
 export default {
   data() {
     return {
@@ -53,6 +54,7 @@ export default {
         imageUrl: '',
       },
       editDialog: true,
+      placeholder,
     };
   },
   created() {
