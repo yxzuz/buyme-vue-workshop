@@ -6,24 +6,35 @@
         <v-col v-for="(item, idx) in apiData" :key="idx" cols="3">
           <v-card width="500px" height="600px">
             <v-img height="300px" :src="item.imageUrl || placeholder" />
-            <v-card-title
-              >{{ item.name }}
-              <v-spacer></v-spacer>
+            <v-card-title style="flex-wrap: nowrap">
               <span
-                ><v-btn dark @click="addToCart(item)"
-                  ><v-icon>mdi-cart-variant</v-icon></v-btn
-                ></span
+                class="text-truncate"
+                style="min-width: 0"
+                :title="item.name"
+                >{{ item.name }}</span
               >
+              <v-spacer></v-spacer>
+              <div class="flex-shrink-0">
+                <v-btn dark @click="addToCart(item)"
+                  ><v-icon>mdi-cart-variant</v-icon></v-btn
+                >
+              </div>
             </v-card-title>
             <v-card-text>
               <v-divider class="my-2"></v-divider>
-              <p>{{ item.description }}</p>
+              <p class="description-clamp" :title="item.description">
+                {{ item.description }}
+              </p>
               <v-divider class="my-2"></v-divider>
-              <p>{{ item.price }}</p>
+              <p>
+                <span style="font-weight: bold">Price: </span>{{ item.price }}
+              </p>
               <v-divider class="my-2"></v-divider>
-              <p>{{ item.currentStock }}</p>
+              <p>
+                <span style="font-weight: bold">Stock: </span
+                >{{ item.currentStock }}
+              </p>
               <v-divider class="my-2"></v-divider>
-              <p>{{ item.imageUrl }}</p>
             </v-card-text>
           </v-card>
         </v-col>
@@ -39,20 +50,6 @@ export default {
     return {
       apiData: [],
       id: '',
-      postData: {
-        name: '',
-        description: '',
-        price: '',
-        currentStock: '',
-        imageUrl: '',
-      },
-      postDataDefault: {
-        name: '',
-        description: '',
-        price: '',
-        currentStock: '',
-        imageUrl: '',
-      },
       editDialog: true,
       placeholder,
     };
@@ -64,12 +61,6 @@ export default {
   watch: {
     '$store.state.accessToken'() {
       this.getData();
-    },
-  },
-  computed: {
-    // Computed property real-time to determine the save mode based on the presence of an ID. If the ID is empty, it indicates a new item; otherwise, it indicates editing an existing item.
-    saveMode() {
-      return this.id === '' ? 'newItem' : 'editItem';
     },
   },
   methods: {
@@ -102,4 +93,12 @@ export default {
   },
 };
 </script>
-<style></style>
+<style scoped>
+.description-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+</style>

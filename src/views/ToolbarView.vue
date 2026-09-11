@@ -9,19 +9,23 @@
       <v-btn text color="white" to="/products">Products</v-btn>
       <v-btn text color="white" to="/my-products">My Products</v-btn>
       <v-btn text color="white" to="/orders">My Orders</v-btn>
+
+      <v-spacer></v-spacer>
+
+      <span class="mr-2">Welcome {{ user }} !</span>
       <v-btn text color="white" to="/my-shopping-cart">
         <v-badge :content="cartCount" :value="cartCount" color="error" overlap>
           <v-icon>mdi-cart</v-icon>
         </v-badge>
       </v-btn>
-      <v-spacer></v-spacer>
-
-      <span class="mr-2">Welcome {{ user }} !</span>
       <v-btn text color="white" @click="loginDialog = true"
         ><v-icon>mdi-account</v-icon></v-btn
       >
+
+      <v-btn text color="white" @click="logout"
+        ><v-icon>mdi-logout</v-icon> Logout</v-btn
+      >
       <login-modal v-model="loginDialog" @logged-in="setUser" />
-      <!-- <span>User1: {{ user }} User2: {{ user2 }}</span> -->
     </v-app-bar>
 
     <v-main>
@@ -31,6 +35,7 @@
 </template>
 
 <script>
+import axios from 'axios';
 import LoginModal from '@/components/LoginModal.vue';
 export default {
   components: { LoginModal },
@@ -55,6 +60,25 @@ export default {
     setUser(username) {
       this.user = username;
       this.user2 = username;
+    },
+    logout() {
+      localStorage.removeItem('User');
+      localStorage.removeItem('Role');
+      localStorage.removeItem('isApproved');
+      localStorage.removeItem('storeOwnerId');
+      this.$cookies.remove('accessToken');
+      this.$cookies.remove('User');
+      this.$cookies.remove('Role');
+      this.$cookies.remove('isApproved');
+      delete axios.defaults.headers.common['Authorization'];
+      this.$store.commit('SET_AUTH', { accessToken: null, username: null });
+      this.user = '';
+      this.user2 = '';
+      this.$toast.success('You have been logged out.');
+
+      if (this.$route.name !== 'products') {
+        this.$router.push({ name: 'products' });
+      }
     },
   },
   props: ['username'],

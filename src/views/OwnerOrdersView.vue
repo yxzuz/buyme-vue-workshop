@@ -3,7 +3,7 @@
     <v-container fluid class="#F5EBDD">
       <h1 class="my-4">My Orders</h1>
       <template>
-        <v-simple-table fixed-header height="300px">
+        <v-simple-table fixed-header>
           <template v-slot:default>
             <thead>
               <tr>
@@ -11,6 +11,7 @@
                 <th class="text-left">Product</th>
                 <th class="text-left">Total Amount</th>
                 <th class="text-left">Status</th>
+                <th class="text-left">Timestamp</th>
               </tr>
             </thead>
             <tbody>
@@ -19,6 +20,7 @@
                 <td>{{ formatProducts(item.products) }}</td>
                 <td>{{ item.totalAmount }}</td>
                 <td>{{ item.status }}</td>
+                <td>{{ new Date(item.createdAt).toLocaleString() }}</td>
               </tr>
             </tbody>
           </template>

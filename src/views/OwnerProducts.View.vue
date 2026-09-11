@@ -10,29 +10,38 @@
           <v-card width="500px" height="600px">
             <v-img height="300px" :src="item.imageUrl || placeholder" />
 
-            <v-card-title
-              >{{ item.name }}
+            <v-card-title style="flex-wrap: nowrap">
+              <span
+                class="text-truncate"
+                style="min-width: 0"
+                :title="item.name"
+                >{{ item.name }}</span
+              >
               <v-spacer></v-spacer>
-              <span
-                ><v-btn white depressed @click="editItem(item)"
+              <div class="flex-shrink-0">
+                <v-btn white depressed @click="editItem(item)"
                   ><v-icon>mdi-square-edit-outline</v-icon></v-btn
-                ></span
-              >
-              <span
-                ><v-btn white depressed @click="deleteItem(item)"
+                >
+                <v-btn white depressed @click="deleteItem(item)"
                   ><v-icon>mdi-delete</v-icon></v-btn
-                ></span
-              >
+                >
+              </div>
             </v-card-title>
             <v-card-text>
               <v-divider class="my-2"></v-divider>
-              <p>{{ item.description }}</p>
+              <p class="description-clamp" :title="item.description">
+                {{ item.description }}
+              </p>
               <v-divider class="my-2"></v-divider>
-              <p>{{ item.price }}</p>
+              <p>
+                <span style="font-weight: bold">Price: </span>{{ item.price }}
+              </p>
               <v-divider class="my-2"></v-divider>
-              <p>{{ item.currentStock }}</p>
+              <p>
+                <span style="font-weight: bold">Stock: </span
+                >{{ item.currentStock }}
+              </p>
               <v-divider class="my-2"></v-divider>
-              <p>{{ item.imageUrl }}</p>
             </v-card-text>
           </v-card>
         </v-col>
@@ -51,13 +60,21 @@
             class="px-4"
           />
 
-          <v-text-field
+          <!-- <v-text-field
             v-model="postData.description"
             label="Description"
             outlined
             clearable
             class="px-4"
-          />
+          /> -->
+          <v-textarea
+            outlined
+            clearable
+            class="px-4"
+            name="postData.description"
+            label="Description"
+            v-model="postData.description"
+          ></v-textarea>
 
           <v-text-field
             v-model="postData.price"
@@ -75,13 +92,45 @@
             class="px-4"
           />
 
-          <v-text-field
-            v-model="postData.imageUrl"
-            label="Image URL"
-            outlined
-            clearable
-            class="px-4"
-          />
+          <div class="px-4">
+            <div
+              class="dropzone"
+              :class="{ 'dropzone--active': isDragging }"
+              @dragover.prevent="isDragging = true"
+              @dragleave.prevent="isDragging = false"
+              @drop.prevent="handleDrop"
+              @click="$refs.fileInput.click()"
+            >
+              <img
+                v-if="imagePreview"
+                :src="imagePreview"
+                class="dropzone-preview"
+              />
+              <div v-else class="grey--text">
+                <v-icon large color="grey">mdi-cloud-upload</v-icon>
+                <p class="mb-0">
+                  Drag & drop an image here, or click to browse
+                </p>
+              </div>
+              <input
+                ref="fileInput"
+                type="file"
+                accept="image/*"
+                class="d-none"
+                @change="handleFileSelect"
+                @click.stop
+              />
+            </div>
+            <v-btn
+              v-if="imagePreview"
+              text
+              small
+              color="error"
+              @click="clearImage"
+            >
+              Remove image
+            </v-btn>
+          </div>
         </v-card-text>
 
         <v-card-actions>
@@ -109,10 +158,19 @@ export default {
         description: '',
         price: '',
         currentStock: '',
-        imageUrl: '',
+      },
+      postDataDefault: {
+        name: '',
+        description: '',
+        price: '',
+        currentStock: '',
       },
       editDialog: false,
       placeholder,
+      imageFile: null,
+      imagePreview: '',
+      imageRemoved: false,
+      isDragging: false,
     };
   },
   created() {
@@ -127,24 +185,56 @@ export default {
   computed: {
     // Computed property real-time to determine the save mode based on the presence of an ID. If the ID is empty, it indicates a new item; otherwise, it indicates editing an existing item.
     saveMode() {
-      return this.id === '' ? 'newItem' : 'editItem';
+      return this.id === '' ? 'Add Product' : 'Edit Product';
     },
   },
   methods: {
     newItem() {
       this.id = '';
       this.postData = { ...this.postDataDefault };
+      this.imageFile = null;
+      this.imagePreview = '';
+      this.imageRemoved = false;
       this.editDialog = true;
     },
     editItem(item) {
       this.id = item._id;
       this.postData = { ...item };
+      this.imageFile = null;
+      this.imagePreview = item.imageUrl;
+      this.imageRemoved = false;
       this.editDialog = true;
     },
     closeDialog() {
       this.id = '';
       this.postData = { ...this.postDataDefault };
+      this.imageFile = null;
+      this.imagePreview = '';
+      this.imageRemoved = false;
       this.editDialog = false;
+    },
+    handleDrop(event) {
+      this.isDragging = false;
+      const file = event.dataTransfer.files && event.dataTransfer.files[0];
+      if (file) this.setImageFile(file);
+    },
+    handleFileSelect(event) {
+      const file = event.target.files && event.target.files[0];
+      if (file) this.setImageFile(file);
+    },
+    setImageFile(file) {
+      if (!file.type.startsWith('image/')) {
+        this.$toast.error('Please select an image file.');
+        return;
+      }
+      this.imageFile = file;
+      this.imagePreview = URL.createObjectURL(file);
+    },
+    clearImage() {
+      this.imageFile = null;
+      this.imagePreview = '';
+      this.imageRemoved = true;
+      this.$refs.fileInput.value = '';
     },
     saveSelect() {
       if (this.id !== '') {
@@ -176,11 +266,24 @@ export default {
         ? `http://localhost:3000/${imagePath.replace(/^public\//, '')}`
         : ''; // Replace the first occurrence of "public/" with an empty string
     },
+    buildFormData() {
+      const formData = new FormData();
+      formData.append('name', this.postData.name);
+      formData.append('description', this.postData.description);
+      formData.append('price', this.postData.price);
+      formData.append('currentStock', this.postData.currentStock);
+      if (this.imageFile) {
+        formData.append('image', this.imageFile);
+      } else if (this.imageRemoved) {
+        formData.append('removeImage', 'true');
+      }
+      return formData;
+    },
     async savePostData() {
       try {
         const { data: responseBody } = await axios.post(
           'http://localhost:3000/api/v1/products',
-          this.postData
+          this.buildFormData()
         );
         console.log('Response from API:', responseBody);
         // Your save logic here
@@ -199,7 +302,7 @@ export default {
       try {
         const { data: responseBody } = await axios.put(
           `http://localhost:3000/api/v1/products/${this.id}`,
-          this.postData
+          this.buildFormData()
         );
         console.log('Response from API:', responseBody);
         this.$toast.success('Product updated successfully!');
@@ -238,4 +341,29 @@ export default {
   },
 };
 </script>
-<style></style>
+<style scoped>
+.dropzone {
+  border: 2px dashed #bbb;
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+.dropzone--active {
+  border-color: #f2765e;
+  background: rgba(242, 118, 94, 0.08);
+}
+.dropzone-preview {
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+}
+.description-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+</style>
